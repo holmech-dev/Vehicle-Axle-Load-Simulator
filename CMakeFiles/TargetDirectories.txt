@@ -1,0 +1,3 @@
+/Users/holmech/code/vehicle_models/slope/CMakeFiles/BicycleRide.dir
+/Users/holmech/code/vehicle_models/slope/CMakeFiles/edit_cache.dir
+/Users/holmech/code/vehicle_models/slope/CMakeFiles/rebuild_cache.dir
