@@ -78,6 +78,35 @@ void RenderAxleLoadPlots(const VehicleParams& vp,
                 }
             }
 
+            // Tangent (linearized) traces around the operating point show how well the
+            // small-angle approximation holds across the slope range.
+            if (rows > 0) {
+                const double theta_op = thetaNom;
+                const double frontSlope =
+                    -(vp.lr / vp.L) * vp.m * g * std::sin(theta_op) -
+                    (vp.h  / vp.L) * vp.m * std::cos(theta_op);
+                const double rearSlope =
+                    -(vp.lf / vp.L) * vp.m * g * std::sin(theta_op) +
+                    (vp.h  / vp.L) * vp.m * std::cos(theta_op);
+
+                std::vector<double> frontLinear(rows, 0.0);
+                std::vector<double> rearLinear(rows, 0.0);
+                for (int i = 0; i < rows; ++i) {
+                    const double theta_i = AxleLoadData.theta[i];
+                    const double deltaTheta = theta_i - theta_op;
+                    frontLinear[i] = WF0 + frontSlope * deltaTheta;
+                    rearLinear[i]  = WR0 + rearSlope  * deltaTheta;
+                }
+
+                ImPlot::SetNextLineStyle(ImVec4(1.0f, 0.7f, 0.0f, 1.0f), 1.5f);
+                ImPlot::PlotLine("Front Linearized (OP tangent)",
+                                 AxleLoadData.theta.data(), frontLinear.data(), rows);
+                ImPlot::SetNextLineStyle(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), 1.5f);
+                ImPlot::PlotLine("Rear Linearized (OP tangent)",
+                                 AxleLoadData.theta.data(), rearLinear.data(), rows);
+                ImPlot::SetNextLineStyle(ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // restore defaults
+            }
+
             // Overlay rear axle traces at same accel slices (min/max)
             const std::string lblRearAmin = std::string("Rear Load (min a=") + fmt(a_min) + ")";
             const std::string lblRearAmax = std::string("Rear Load (max a=") + fmt(a_max) + ")";
