@@ -63,6 +63,10 @@ void RenderAxleLoadPlots(const VehicleParams& vp,
             const double a_max = AxleLoadData.accel.back();
             const std::string lblFrontAmin = std::string("Front Load (min a=") + fmt(a_min) + ")";
             const std::string lblFrontAmax = std::string("Front Load (max a=") + fmt(a_max) + ")";
+            const ImVec4 slopeColors[2] = {
+                ImVec4(0.18f, 0.45f, 0.80f, 1.0f), // blue for min accel (e.g., -10)
+                ImVec4(1.00f, 0.55f, 0.10f, 1.0f)  // orange for max accel (e.g., +10)
+            };
             for (int k = 0; k < 2; ++k) {
                 const int j = j_idx[k];
                 if (j < 0 || j >= nAccel) continue;
@@ -73,6 +77,7 @@ void RenderAxleLoadPlots(const VehicleParams& vp,
                     y[i] = AxleLoadData.WF[i][j];
                 }
                 if (row_ok) {
+                    ImPlot::SetNextLineStyle(slopeColors[k], 1.5f);
                     const char* label = (k == 0) ? lblFrontAmin.c_str() : lblFrontAmax.c_str();
                     ImPlot::PlotLine(label, AxleLoadData.theta.data(), y.data(), rows);
                 }
@@ -98,13 +103,14 @@ void RenderAxleLoadPlots(const VehicleParams& vp,
                     rearLinear[i]  = WR0 + rearSlope  * deltaTheta;
                 }
 
-                ImPlot::SetNextLineStyle(ImVec4(1.0f, 0.7f, 0.0f, 1.0f), 1.5f);
+                const ImVec4 grey(0.6f, 0.6f, 0.6f, 1.0f);
+                ImPlot::SetNextLineStyle(grey, 1.5f);
                 ImPlot::PlotLine("Front Linearized (OP tangent)",
                                  AxleLoadData.theta.data(), frontLinear.data(), rows);
-                ImPlot::SetNextLineStyle(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), 1.5f);
+                ImPlot::SetNextLineStyle(grey, 1.5f);
                 ImPlot::PlotLine("Rear Linearized (OP tangent)",
                                  AxleLoadData.theta.data(), rearLinear.data(), rows);
-                ImPlot::SetNextLineStyle(ImVec4(0.0f, 0.0f, 0.0f, 0.0f)); // restore defaults
+                ImPlot::SetNextLineStyle(ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
             }
 
             // Overlay rear axle traces at same accel slices (min/max)
@@ -120,6 +126,7 @@ void RenderAxleLoadPlots(const VehicleParams& vp,
                     yR[i] = AxleLoadData.WR[i][j];
                 }
                 if (row_ok) {
+                    ImPlot::SetNextLineStyle(slopeColors[k], 1.5f);
                     const char* label = (k == 0) ? lblRearAmin.c_str() : lblRearAmax.c_str();
                     ImPlot::PlotLine(label, AxleLoadData.theta.data(), yR.data(), rows);
                 }
@@ -149,13 +156,42 @@ void RenderAxleLoadPlots(const VehicleParams& vp,
             const double th_max = AxleLoadData.theta.back();
             const std::string lblFrontTmin = std::string("Front Load (min theta =") + fmt2(th_min) + " rad)";
             const std::string lblFrontTmax = std::string("Front Load (max theta =") + fmt2(th_max) + " rad)";
+            const ImVec4 accelColors[2] = {
+                ImVec4(0.18f, 0.45f, 0.80f, 1.0f),
+                ImVec4(1.00f, 0.55f, 0.10f, 1.0f)
+            };
             for (int k = 0; k < 2; ++k) {
                 const int i = row_idx[k];
                 if (i < 0 || i >= nThetaRows) continue;
                 if ((int)AxleLoadData.WF[i].size() == nAccel) {
+                    ImPlot::SetNextLineStyle(accelColors[k], 1.5f);
                     const char* label = (k == 0) ? lblFrontTmin.c_str() : lblFrontTmax.c_str();
                     ImPlot::PlotLine(label, AxleLoadData.accel.data(), AxleLoadData.WF[i].data(), nAccel);
                 }
+            }
+
+            // Tangent (linearized) traces around the operating point with respect to acceleration.
+            if (nAccel > 0) {
+                const double frontAccelSlope = -(vp.h / vp.L) * vp.m / g;
+                const double rearAccelSlope  =  (vp.h / vp.L) * vp.m / g;
+
+                std::vector<double> frontLinearA(nAccel, 0.0);
+                std::vector<double> rearLinearA(nAccel, 0.0);
+                for (int j = 0; j < nAccel; ++j) {
+                    const double accel_j = AxleLoadData.accel[j];
+                    const double deltaAccel = accel_j - accelNom;
+                    frontLinearA[j] = WF0 + frontAccelSlope * deltaAccel;
+                    rearLinearA[j]  = WR0 + rearAccelSlope  * deltaAccel;
+                }
+
+                const ImVec4 grey(0.6f, 0.6f, 0.6f, 1.0f);
+                ImPlot::SetNextLineStyle(grey, 1.5f);
+                ImPlot::PlotLine("Front Linearized vs Accel",
+                                 AxleLoadData.accel.data(), frontLinearA.data(), nAccel);
+                ImPlot::SetNextLineStyle(grey, 1.5f);
+                ImPlot::PlotLine("Rear Linearized vs Accel",
+                                 AxleLoadData.accel.data(), rearLinearA.data(), nAccel);
+                ImPlot::SetNextLineStyle(ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
             }
 
             // Overlay rear axle traces at the same slope slices (min/max θ)
@@ -165,6 +201,7 @@ void RenderAxleLoadPlots(const VehicleParams& vp,
                 const int i = row_idx[k];
                 if (i < 0 || i >= nThetaRows) continue;
                 if ((int)AxleLoadData.WR[i].size() == nAccel) {
+                    ImPlot::SetNextLineStyle(accelColors[k], 1.5f);
                     const char* label = (k == 0) ? lblRearTmin.c_str() : lblRearTmax.c_str();
                     ImPlot::PlotLine(label, AxleLoadData.accel.data(), AxleLoadData.WR[i].data(), nAccel);
                 }

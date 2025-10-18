@@ -73,7 +73,7 @@ int main() {
     //********************//
     VehicleParams vp{1475.0, 0.55, 2.636, 1.0544, 1.5816};  // m, h, L, CoG Fr, CoG Rr
     // , 5 slopes, 100 accel points
-    AxleData AxleLoadData = CalculateAxleLoads(vp, -0.3, 0.3, 5, -10.0, 10.0, 100); // vp, thetaMin -0.1, thetaMax 0.1, thetaSteps 5, accelMin -6, accelMax 6, accelSteps 100
+    AxleData AxleLoadData = CalculateAxleLoads(vp, -0.1, 0.1, 5, -10.0, 10.0, 100); // vp, thetaMin -0.1, thetaMax 0.1, thetaSteps 5, accelMin -6, accelMax 6, accelSteps 100
     double thetaNom = 0.0;
     double accelNom = 0.0;
     auto [WF0, WR0]  = CalculateNominalAxleLoads(vp, thetaNom, accelNom);
@@ -113,8 +113,8 @@ int main() {
         ImGui::Separator();
 
         // Range controls (above plots). Defaults mirror initial computation above.
-        static PlotRanges ranges{-0.35, 0.35, -10.0, 10.0};
-        static const PlotRanges defaults{-0.35, 0.35, -10.0, 10.0};
+        static PlotRanges ranges{-0.1, 0.1, -10.0, 10.0};
+        static const PlotRanges defaults{-0.1, 0.1, -10.0, 10.0};
         const int thetaSteps = 5;
         const int accelSteps = 100;
 
